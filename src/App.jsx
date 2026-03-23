@@ -7,7 +7,7 @@ export default function StrategicApp() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const runAudit = async () => {
+ const runAudit = async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/analyze', {
@@ -15,10 +15,17 @@ export default function StrategicApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brand, competitors }),
       });
+      
       const data = await response.json();
+      
+      if (!response.ok) {
+        // This will now tell us EXACTLY what the server said
+        throw new Error(data.error || `Server Error: ${response.status}`);
+      }
+      
       setAnalysis(data);
     } catch (err) {
-      alert("Analysis failed. Ensure GEMINI_API_KEY is set in Cloudflare Settings.");
+      alert(`STRATEGIC ERROR: ${err.message}`);
     } finally {
       setLoading(false);
     }
