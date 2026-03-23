@@ -1,0 +1,6 @@
+name = "ad-intel-strat"
+compatibility_date = "2026-03-23"
+pages_build_output_dir = "dist"
+
+[vars]
+# Ensure you set GEMINI_API_KEY in the Cloudflare Dashboard
