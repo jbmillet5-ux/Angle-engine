@@ -1,40 +1,45 @@
 export async function onRequestPost(context) {
-  const { brand, competitors } = await context.request.json();
+  try {
+    const { brand, competitors } = await context.request.json();
+    const API_KEY = context.env.GEMINI_API_KEY;
 
-  const prompt = `
-    ROLE: Lead Growth Analyst for Public Records Data.
-    PRIMARY ASSET: ${brand}
-    COMPETITOR CONTEXT: ${JSON.stringify(competitors)}
+    if (!API_KEY) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is missing in Cloudflare Environment Variables." }), { status: 500 });
+    }
 
-    OBJECTIVE: 
-    Identify "High-Friction" tactical use cases for our data that neither we nor competitors are currently marketing. We need to move beyond "Catch a Cheater" or "Standard Background Check."
+    // Using Gemini 3 Flash model as per your architecture
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${API_KEY}`;
 
-    REQUIRED REPORT SECTIONS (HTML format):
-    1. 🔍 CURRENT ANGLE AUDIT: What is ${brand} currently over-relying on?
-    2. ⚠️ COMPETITOR CLUSTERS: What use cases are currently saturated in the market?
-    3. 🚀 THE WHITE SPACE (TACTICAL): Provide 3-4 NEW "Complementary" Use Cases. 
-       - For each, define: The specific high-stakes problem, the target hook, and the specific data point (e.g., Civil Judgments, Tax Liens, Address History) that solves it.
-    4. 🧪 TESTING ROADMAP: A table with "Angle", "3-Second Visual Hook", and "Success KPI."
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ 
+          parts: [{ 
+            text: `Analyze the public records brand ${brand} against competitors ${JSON.stringify(competitors)}. Find tactical white-space use cases (e.g. estate management, recruiter vetting, etc). Return a professional HTML report with tables.` 
+          }] 
+        }]
+      })
+    });
 
-    SPECIFIC INSTRUCTIONS:
-    Think about niche markets: Real estate executors, small business B2B vetting, remote hiring fraud, professional influencer verification, and digital legacy management. Be tactical, not generic.
-  `;
+    const data = await response.json();
 
-  const API_KEY = context.env.GEMINI_API_KEY;
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
+    // If Google returns an error (like an invalid key), we pass that to the UI
+    if (data.error) {
+      return new Response(JSON.stringify({ error: `Google API Error: ${data.error.message}` }), { status: 400 });
+    }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
+    if (!data.candidates || !data.candidates[0]) {
+      return new Response(JSON.stringify({ error: "The AI was unable to generate a response. Try a different competitor URL." }), { status: 500 });
+    }
 
-  const data = await response.json();
-  const html_report = data.candidates[0].content.parts[0].text;
+    const html_report = data.candidates[0].content.parts[0].text;
 
-  return new Response(JSON.stringify({ html_report }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
+    return new Response(JSON.stringify({ html_report }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: `System Crash: ${err.message}` }), { status: 500 });
+  }
 }
