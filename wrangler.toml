@@ -4,3 +4,7 @@ pages_build_output_dir = "dist"
 
 [vars]
 # Ensure you set GEMINI_API_KEY in the Cloudflare Dashboard
+
+[vars]
+# This tells Cloudflare "Expect this variable"
+GEMINI_API_KEY = "GEMINI_API_KEY"
