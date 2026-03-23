@@ -4,10 +4,10 @@ export async function onRequestPost(context) {
     const API_KEY = context.env.GEMINI_API_KEY;
 
     if (!API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is missing in Cloudflare Environment Variables." }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY in Cloudflare Dashboard." }), { status: 500 });
     }
 
-    // Using Gemini 3 Flash model as per your architecture
+    // UPDATED: Using the 2026 Gemini 3 Flash stable endpoint
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(endpoint, {
@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
       body: JSON.stringify({
         contents: [{ 
           parts: [{ 
-            text: `Analyze the public records brand ${brand} against competitors ${JSON.stringify(competitors)}. Find tactical white-space use cases (e.g. estate management, recruiter vetting, etc). Return a professional HTML report with tables.` 
+            text: `Analyze ${brand} vs ${JSON.stringify(competitors)}. Find tactical 2026 white-space use cases for public records data. Focus on non-obvious markets like estate executors, small business vetting, or influencer fraud. Return a structured HTML report with tables.` 
           }] 
         }]
       })
@@ -24,13 +24,8 @@ export async function onRequestPost(context) {
 
     const data = await response.json();
 
-    // If Google returns an error (like an invalid key), we pass that to the UI
     if (data.error) {
-      return new Response(JSON.stringify({ error: `Google API Error: ${data.error.message}` }), { status: 400 });
-    }
-
-    if (!data.candidates || !data.candidates[0]) {
-      return new Response(JSON.stringify({ error: "The AI was unable to generate a response. Try a different competitor URL." }), { status: 500 });
+      return new Response(JSON.stringify({ error: `AI Studio Error: ${data.error.message}` }), { status: 400 });
     }
 
     const html_report = data.candidates[0].content.parts[0].text;
@@ -40,6 +35,6 @@ export async function onRequestPost(context) {
     });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: `System Crash: ${err.message}` }), { status: 500 });
+    return new Response(JSON.stringify({ error: `System Error: ${err.message}` }), { status: 500 });
   }
 }
