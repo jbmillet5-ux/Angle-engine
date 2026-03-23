@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.prose h1 { @apply text-3xl font-black text-slate-900 mb-6 border-b pb-4; }
+.prose h2 { @apply text-xl font-bold text-indigo-700 mt-8 mb-4 flex items-center gap-2; }
+.prose table { @apply w-full border-collapse my-6 text-sm; }
+.prose th { @apply bg-slate-100 text-left p-3 font-bold uppercase tracking-widest text-xs; }
+.prose td { @apply border-b p-3 text-slate-600; }
+.prose strong { @apply text-slate-900 font-bold; }
